@@ -1,4 +1,5 @@
 import { Scenes, session, Telegraf } from 'telegraf';
+import { message } from 'telegraf/filters';
 import { MenuItemEnum } from './menu.config';
 import { MenuActionController } from './menu-action-controller';
 
@@ -36,10 +37,10 @@ export class TelegramBot {
         });
 
         // Plain text — route slash-commands written manually (e.g. /greet)
-        this.bot.on('text', async (ctx) => {
-            const message = ctx.message.text.trim();
-            if (message.startsWith('/')) {
-                const command = message.slice(1) as MenuItemEnum;
+        this.bot.on(message('text'), async (ctx) => {
+            const text = ctx.message.text.trim();
+            if (text.startsWith('/')) {
+                const command = text.slice(1) as MenuItemEnum;
                 const handler = this.menuActionController.getActionHandler(command);
                 await handler(ctx);
             }

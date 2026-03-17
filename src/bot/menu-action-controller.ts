@@ -1,4 +1,5 @@
 import { Scenes } from 'telegraf';
+import { message } from 'telegraf/filters';
 import { BOT_MENU, IMenuItem, MenuItemEnum } from './menu.config';
 import { bold, formatDate } from '../utils/format.utils';
 
@@ -81,7 +82,7 @@ export class MenuActionController {
             ctx.scene.leave();
         });
 
-        this.echoScene.on('text', async (ctx: any) => {
+        this.echoScene.on(message('text'), async (ctx: any) => {
             await ctx.reply(`You said: ${ctx.message.text}`);
         });
     }
@@ -101,7 +102,7 @@ export class MenuActionController {
             ctx.scene.leave();
         });
 
-        this.settingsScene.on('text', async (ctx: any) => {
+        this.settingsScene.on(message('text'), async (ctx: any) => {
             const name = ctx.message.text.trim();
             // TODO: persist to DB when switching to the db branch
             await ctx.reply(`Display name set to: ${bold(name)} ✅`, { parse_mode: 'HTML' });
