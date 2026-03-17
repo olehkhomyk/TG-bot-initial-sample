@@ -1,10 +1,11 @@
 export enum MenuItemEnum {
-    GREET    = 'greet',
-    HELP     = 'help',
-    ECHO     = 'echo',
-    ABOUT    = 'about',
-    SETTINGS = 'settings',
-    REFRESH  = 'refresh',
+    GREET      = 'greet',
+    HELP       = 'help',
+    ECHO       = 'echo',
+    ABOUT      = 'about',
+    MY_PROFILE = 'my_profile',
+    SETTINGS   = 'settings',
+    REFRESH    = 'refresh',
 }
 
 export interface IMenuItem {
@@ -22,7 +23,8 @@ export const BOT_MENU: IMenuItem[][] = [
         { text: 'ℹ️ About',    callback_data: MenuItemEnum.ABOUT },
     ],
     [
-        { text: '⚙️ Settings', callback_data: MenuItemEnum.SETTINGS },
+        { text: '👤 My Profile', callback_data: MenuItemEnum.MY_PROFILE },
+        { text: '⚙️ Settings',   callback_data: MenuItemEnum.SETTINGS },
     ],
     [
         { text: '🔄 Refresh',  callback_data: MenuItemEnum.REFRESH },

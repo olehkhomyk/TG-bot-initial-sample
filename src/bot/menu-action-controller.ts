@@ -2,6 +2,7 @@ import { Scenes } from 'telegraf';
 import { message } from 'telegraf/filters';
 import { BOT_MENU, IMenuItem, MenuItemEnum } from './menu.config';
 import { bold, formatDate } from '../utils/format.utils';
+import { ProfileStore } from '../db/profile.store';
 
 export class MenuActionController {
     // ─── Scene keys ───────────────────────────────────────────────────────────
@@ -14,12 +15,13 @@ export class MenuActionController {
 
     // ─── Action handler map ───────────────────────────────────────────────────
     private actionHandlers: Record<MenuItemEnum, (ctx: any) => Promise<any>> = {
-        [MenuItemEnum.GREET]:    async (ctx) => this.greet(ctx),
-        [MenuItemEnum.HELP]:     async (ctx) => this.help(ctx),
-        [MenuItemEnum.ECHO]:     async (ctx) => this.startEcho(ctx),
-        [MenuItemEnum.ABOUT]:    async (ctx) => this.about(ctx),
-        [MenuItemEnum.SETTINGS]: async (ctx) => this.startSettings(ctx),
-        [MenuItemEnum.REFRESH]:  async (ctx) => this.showMainMenu(ctx),
+        [MenuItemEnum.GREET]:      async (ctx) => this.greet(ctx),
+        [MenuItemEnum.HELP]:       async (ctx) => this.help(ctx),
+        [MenuItemEnum.ECHO]:       async (ctx) => this.startEcho(ctx),
+        [MenuItemEnum.ABOUT]:      async (ctx) => this.about(ctx),
+        [MenuItemEnum.MY_PROFILE]: async (ctx) => this.myProfile(ctx),
+        [MenuItemEnum.SETTINGS]:   async (ctx) => this.startSettings(ctx),
+        [MenuItemEnum.REFRESH]:    async (ctx) => this.showMainMenu(ctx),
     };
 
     // ─── Main menu getter ─────────────────────────────────────────────────────
@@ -38,8 +40,17 @@ export class MenuActionController {
 
     // ─── /start ───────────────────────────────────────────────────────────────
     start = async (ctx: any) => {
+        // Upsert profile on every /start so data stays fresh
+        await ProfileStore.upsert(ctx.from.id, {
+            telegramId: ctx.from.id,
+            username:   ctx.from.username,
+            firstName:  ctx.from.first_name,
+            lastName:   ctx.from.last_name,
+            language:   ctx.from.language_code,
+        });
+
         await ctx.reply(
-            `Welcome, ${bold(ctx.from.first_name)}! 👋\nThis is a sample bot. Use the menu below.`,
+            `Welcome, ${bold(ctx.from.first_name)}! 👋\nYour profile has been saved.`,
             this.mainMenu
         );
     };
@@ -55,7 +66,8 @@ export class MenuActionController {
             `👋 <b>Greet</b> — say hello\n` +
             `💬 <b>Echo</b> — repeat what you type\n` +
             `ℹ️ <b>About</b> — bot info\n` +
-            `⚙️ <b>Settings</b> — set your display name\n` +
+            `👤 <b>My Profile</b> — view your saved profile\n` +
+            `⚙️ <b>Settings</b> — update your display name\n` +
             `🔄 <b>Refresh</b> — reload the menu`,
             { parse_mode: 'HTML' }
         );
@@ -69,6 +81,27 @@ export class MenuActionController {
             `A clean starting template — fork and build something great.`,
             { parse_mode: 'HTML' }
         );
+    };
+
+    private myProfile = async (ctx: any) => {
+        const profile = await ProfileStore.getByTelegramId(ctx.from.id);
+
+        if (!profile) {
+            await ctx.reply('Profile not found. Send /start to create one.');
+            return;
+        }
+
+        const lines = [
+            `<b>Your profile</b>`,
+            `ID: <code>${profile.telegramId}</code>`,
+            profile.username  ? `Username: @${profile.username}`         : null,
+            profile.firstName ? `First name: ${profile.firstName}`       : null,
+            profile.lastName  ? `Last name: ${profile.lastName}`         : null,
+            profile.language  ? `Language: ${profile.language}`          : null,
+            `Registered: ${formatDate(profile.registeredAt)}`,
+        ].filter(Boolean).join('\n');
+
+        await ctx.reply(lines, { parse_mode: 'HTML' });
     };
 
     // ─── Echo scene ───────────────────────────────────────────────────────────
@@ -94,7 +127,7 @@ export class MenuActionController {
     // ─── Settings scene ───────────────────────────────────────────────────────
     private setupSettingsScene() {
         this.settingsScene.enter(async (ctx: any) => {
-            await ctx.reply('Enter your display name (or /cancel to go back):');
+            await ctx.reply('Enter your first name (or /cancel to go back):');
         });
 
         this.settingsScene.command('cancel', async (ctx: any) => {
@@ -103,9 +136,9 @@ export class MenuActionController {
         });
 
         this.settingsScene.on(message('text'), async (ctx: any) => {
-            const name = ctx.message.text.trim();
-            // TODO: persist to DB when switching to the db branch
-            await ctx.reply(`Display name set to: ${bold(name)} ✅`, { parse_mode: 'HTML' });
+            const firstName = ctx.message.text.trim();
+            await ProfileStore.updateByTelegramId(ctx.from.id, { firstName });
+            await ctx.reply(`First name updated to: ${bold(firstName)} ✅`, { parse_mode: 'HTML' });
             ctx.scene.leave();
         });
     }
