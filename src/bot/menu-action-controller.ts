@@ -2,7 +2,7 @@ import { Scenes } from 'telegraf';
 import { message } from 'telegraf/filters';
 import { BOT_MENU, IMenuItem, MenuItemEnum } from './menu.config';
 import { bold, formatDate } from '../utils/format.utils';
-import { ProfileStore } from '../db/profile.store';
+import { ProfileRepository } from '../db/profile.repository';
 
 export class MenuActionController {
     // ─── Scene keys ───────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ export class MenuActionController {
     // ─── /start ───────────────────────────────────────────────────────────────
     start = async (ctx: any) => {
         // Upsert profile on every /start so data stays fresh
-        await ProfileStore.upsert(ctx.from.id, {
+        await ProfileRepository.upsert(ctx.from.id, {
             telegramId: ctx.from.id,
             username:   ctx.from.username,
             firstName:  ctx.from.first_name,
@@ -84,7 +84,7 @@ export class MenuActionController {
     };
 
     private myProfile = async (ctx: any) => {
-        const profile = await ProfileStore.getByTelegramId(ctx.from.id);
+        const profile = await ProfileRepository.getByTelegramId(ctx.from.id);
 
         if (!profile) {
             await ctx.reply('Profile not found. Send /start to create one.');
@@ -137,7 +137,7 @@ export class MenuActionController {
 
         this.settingsScene.on(message('text'), async (ctx: any) => {
             const firstName = ctx.message.text.trim();
-            await ProfileStore.updateByTelegramId(ctx.from.id, { firstName });
+            await ProfileRepository.updateByTelegramId(ctx.from.id, { firstName });
             await ctx.reply(`First name updated to: ${bold(firstName)} ✅`, { parse_mode: 'HTML' });
             ctx.scene.leave();
         });

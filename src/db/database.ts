@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { ProfileStore } from './profile.store';
+import { ProfileRepository } from './profile.repository';
 
 export class Database {
     public static async connect(): Promise<void> {
@@ -14,6 +14,6 @@ export class Database {
     }
 
     private static initModels(): void {
-        ProfileStore.initializeModel();
+        ProfileRepository.initializeModel();
     }
 }

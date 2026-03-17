@@ -14,26 +14,26 @@ const profileSchema = new Schema<IProfileDocument>(
     { timestamps: true }
 );
 
-export class ProfileStore {
+export class ProfileRepository {
     public static Profile: mongoose.Model<IProfileDocument>;
 
     public static initializeModel(): void {
-        if (!ProfileStore.Profile) {
-            ProfileStore.Profile = mongoose.model<IProfileDocument>('Profile', profileSchema);
+        if (!ProfileRepository.Profile) {
+            ProfileRepository.Profile = mongoose.model<IProfileDocument>('Profile', profileSchema);
         }
     }
 
     static async create(data: Pick<IProfileDocument, 'telegramId'> & Partial<IProfileDocument>): Promise<IProfileDocument> {
-        const profile = new ProfileStore.Profile(data);
+        const profile = new ProfileRepository.Profile(data);
         return profile.save();
     }
 
     static getByTelegramId(telegramId: number) {
-        return ProfileStore.Profile.findOne({ telegramId });
+        return ProfileRepository.Profile.findOne({ telegramId });
     }
 
     static async upsert(telegramId: number, data: Partial<IProfileDocument>): Promise<IProfileDocument | null> {
-        return ProfileStore.Profile.findOneAndUpdate(
+        return ProfileRepository.Profile.findOneAndUpdate(
             { telegramId },
             { $set: data },
             { upsert: true, new: true }
@@ -41,13 +41,13 @@ export class ProfileStore {
     }
 
     static async updateByTelegramId(telegramId: number, updates: Partial<IProfileDocument>): Promise<void> {
-        await ProfileStore.Profile.findOneAndUpdate(
+        await ProfileRepository.Profile.findOneAndUpdate(
             { telegramId },
             { $set: updates }
         );
     }
 
     static async deleteByTelegramId(telegramId: number): Promise<void> {
-        await ProfileStore.Profile.deleteOne({ telegramId });
+        await ProfileRepository.Profile.deleteOne({ telegramId });
     }
 }
